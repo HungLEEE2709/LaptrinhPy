@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Web - Python</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            margin-top: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .info {
+            margin-top: 15px;
+            color: #666;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .game-status {
+            font-size: 18px;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .user-info {
+            margin-bottom: 20px;
+        }
+        
+        .nav-buttons {
+            margin-top: 10px;
+        }
+        
+        .btn-logout {
+            background: linear-gradient(135deg, #ff5555 0%, #ff0000 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="user-info">
+            <span>👤 Xin chào, <strong>{{ username }}</strong></span>
+            <div class="nav-buttons">
+                <a href="/scores" class="btn">🏆 Bảng điểm</a>
+                <a href="/logout" class="btn btn-logout">🚪 Đăng xuất</a>
+            </div>
+        </div>
+        
+        <h1>🐦 Flappy Bird Web (Python)</h1>
+        
+        <div class="score-display">
+            Điểm: <span id="score">0</span>
+        </div>
+        
+        <div class="game-status" id="gameStatus">
+            Nhấn SPACE hoặc click để bắt đầu
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div class="controls">
+            <button class="btn" onclick="jump()">🚀 Nhảy (SPACE)</button>
+            <button class="btn" onclick="resetGame()">🔄 Chơi lại</button>
+            <button class="btn" onclick="toggleFullscreen()">📺 Toàn màn hình</button>
+        </div>
+        
+        <div class="info">
+            <p><strong>Cách chơi:</strong></p>
+            <p>• Dùng SPACE hoặc click canvas để cho chim nhảy</p>
+            <p>• Tránh các ống xanh để không bị game over</p>
+            <p>• Game được viết bằng Python + Pygame!</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const statusElement = document.getElementById('gameStatus');
+        
+        let gameRunning = true;
+        let score = 0;
+        let gameOver = false;
+        
+        // Game variables
+        let bird = {
+            x: 50,
+            y: 300,
+            width: 30,
+            height: 25,
+            velocity: 0,
+            gravity: 0.5,
+            jump: -8
+        };
+        
+        let pipes = [];
+        let gameStarted = false;
+        let pipeGap = 150;
+        let pipeWidth = 60;
+        let pipeSpeed = 2;
+        
+        const colors = {
+            background: '#70c5ce',
+            bird: '#f7d354',
+            pipe: '#73c767',
+            text: '#ffffff'
+        };
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+        
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+        
+        function jump() {
+            if (!gameStarted) {
+                gameStarted = true;
+                statusElement.textContent = 'Game đang chạy...';
+            }
+            if (!gameOver) {
+                bird.velocity = bird.jump;
+            }
+        }
+        
+        function resetGame() {
+            bird.y = 300;
+            bird.velocity = 0;
+            pipes = [];
+            score = 0;
+            gameOver = false;
+            gameStarted = false;
+            scoreElement.textContent = score;
+            statusElement.textContent = 'Nhấn SPACE hoặc click để bắt đầu';
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function updateGame() {
+            if (gameOver || !gameStarted) return;
+            
+            // Update bird
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+            
+            // Check boundaries
+            if (bird.y < 0 || bird.y + bird.height > canvas.height) {
+                endGame();
+                return;
+            }
+            
+            // Update pipes
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 200) {
+                const pipeHeight = Math.random() * (canvas.height - pipeGap - 100) + 50;
+                pipes.push({
+                    x: canvas.width,
+                    topHeight: pipeHeight,
+                    passed: false
+                });
+            }
+            
+            // Move pipes and check collisions
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                const pipe = pipes[i];
+                pipe.x -= pipeSpeed;
+                
+                // Remove off-screen pipes
+                if (pipe.x + pipeWidth < 0) {
+                    pipes.splice(i, 1);
+                    continue;
+                }
+                
+                // Check collision
+                if (checkCollision(pipe)) {
+                    endGame();
+                    return;
+                }
+                
+                // Update score
+                if (!pipe.passed && pipe.x + pipeWidth < bird.x) {
+                    pipe.passed = true;
+                    score++;
+                    scoreElement.textContent = score;
+                }
+            }
+        }
+        
+        function checkCollision(pipe) {
+            const birdLeft = bird.x;
+            const birdRight = bird.x + bird.width;
+            const birdTop = bird.y;
+            const birdBottom = bird.y + bird.height;
+            
+            const pipeLeft = pipe.x;
+            const pipeRight = pipe.x + pipeWidth;
+            const pipeTopBottom = pipe.topHeight;
+            const pipeBottomTop = pipe.topHeight + pipeGap;
+            
+            if (birdRight > pipeLeft && birdLeft < pipeRight) {
+                if (birdTop < pipeTopBottom || birdBottom > pipeBottomTop) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        function endGame() {
+            gameOver = true;
+            statusElement.textContent = `Game Over! Điểm: ${score} - Click để chơi lại`;
+            
+            canvas.addEventListener('click', function handler() {
+                resetGame();
+                canvas.removeEventListener('click', handler);
+            }, { once: true });
+        }
+        
+        function drawGame() {
+            // Clear canvas
+            ctx.fillStyle = colors.background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw bird
+            ctx.fillStyle = colors.bird;
+            ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+            
+            // Draw pipes
+            ctx.fillStyle = colors.pipe;
+            for (const pipe of pipes) {
+                // Top pipe
+                ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
+                // Bottom pipe
+                ctx.fillRect(pipe.x, pipe.topHeight + pipeGap, pipeWidth, canvas.height - pipe.topHeight - pipeGap);
+            }
+            
+            // Draw score
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 30px Arial';
+            ctx.fillText(score.toString(), 20, 40);
+            
+            // Draw start message
+            if (!gameStarted) {
+                ctx.font = '20px Arial';
+                ctx.fillText('Nhấn SPACE hoặc click để bắt đầu', 50, canvas.height / 2);
+            }
+            
+            // Draw game over overlay
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = colors.text;
+                ctx.font = 'bold 30px Arial';
+                ctx.fillText('GAME OVER!', canvas.width / 2 - 70, canvas.height / 2 - 30);
+                
+                ctx.font = '20px Arial';
+                ctx.fillText(`Điểm: ${score}`, canvas.width / 2 - 30, canvas.height / 2);
+                ctx.fillText('Click để chơi lại', canvas.width / 2 - 60, canvas.height / 2 + 30);
+            }
+        }
+        
+        function gameLoop() {
+            updateGame();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start game
+        gameLoop();
+    </script>
+</body>
+</html>

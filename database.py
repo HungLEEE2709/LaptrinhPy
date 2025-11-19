@@ -1,7 +1,10 @@
 from pymongo import MongoClient
+import os
 
-client = MongoClient("mongodb://localhost:27017/")
-db = client["flappy_game"]
+# Database connection
+MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
+client = MongoClient(MONGODB_URI)
+db = client['flappy_game']
 users_col = db["users"]
 scores_col = db["scores"]
 

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>🏆 Bảng điểm cao</h1>
+    
+    {% if scores %}
+    <table class="scores-table">
+        <thead>
+            <tr>
+                <th>Hạng</th>
+                <th>Tên đăng nhập</th>
+                <th>Điểm</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for score in scores %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ score.username }}</td>
+                <td>{{ score.score }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #666;">Chưa có điểm nào. Hãy là người chơi đầu tiên!</p>
+    {% endif %}
+    
+    <div class="game-controls">
+        {% if username %}
+        <button class="btn game-btn" onclick="window.location.href='/game'">🎮 Chơi lại</button>
+        <button class="btn btn-secondary" onclick="logout()">🚪 Đăng xuất</button>
+        {% else %}
+        <button class="btn game-btn" onclick="window.location.href='/'">🎮 Đăng nhập để chơi</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function logout() {
+    window.location.href = '/logout';
+}
+
+// Auto-refresh scores every 10 seconds
+setInterval(function() {
+    window.location.reload();
+}, 10000);
+</script>
+{% endblock %}

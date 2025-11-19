@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>🐦 Flappy Bird</h1>
+    
+    <div class="user-info">
+        Chào mừng, <strong>{{ username }}</strong>!
+    </div>
+    
+    <div id="gameAlert"></div>
+    
+    <div class="game-controls">
+        <button class="btn game-btn" onclick="startGame()">🎮 Bắt đầu game</button>
+        <button class="btn game-btn" onclick="window.location.href='/scores'">🏆 Xem điểm số</button>
+        <button class="btn btn-secondary" onclick="logout()">🚪 Đăng xuất</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 2rem; color: #666;">
+        <p><strong>Cách chơi:</strong></p>
+        <p>• Nhấn "Bắt đầu game" để khởi động Flappy Bird</p>
+        <p>• Dùng SPACE hoặc click để cho chim nhảy</p>
+        <p>• Tránh các ống và đạt điểm cao nhất!</p>
+        <p>• Điểm số của bạn sẽ được tự động lưu</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function startGame() {
+    try {
+        showAlert('Đang khởi động game...', 'success');
+        
+        const response = await fetch('/start_game', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Game đã bắt đầu! Kiểm tra thanh tác vụ để thấy cửa sổ game.', 'success');
+        } else {
+            showAlert('Không thể khởi động game: ' + (result.error || 'Lỗi không xác định'), 'danger');
+        }
+    } catch (error) {
+        showAlert('Lỗi mạng. Vui lòng thử lại.', 'danger');
+    }
+}
+
+function logout() {
+    window.location.href = '/logout';
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.getElementById('gameAlert');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        alertDiv.style.display = 'none';
+    }, 3000);
+}
+
+// Check for game completion periodically
+setInterval(async function() {
+    try {
+        const response = await fetch('/api/scores');
+        const scores = await response.json();
+        
+        const userScore = scores.find(score => score.username === '{{ username }}');
+        if (userScore) {
+            // You could display the user's latest score here if needed
+            console.log('Latest score for {{ username }}:', userScore.score);
+        }
+    } catch (error) {
+        // Silently ignore errors for this periodic check
+    }
+}, 5000);
+</script>
+{% endblock %}

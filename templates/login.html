@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>🐦 Flappy Bird</h1>
+    
+    <div id="loginAlert"></div>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">Tên đăng nhập:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Mật khẩu:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <button type="submit" class="btn">Đăng nhập</button>
+        <button type="button" class="btn btn-secondary" onclick="showRegister()">Đăng ký</button>
+    </form>
+    
+    <div class="nav-links">
+        <a href="/scores">Xem điểm số</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        } else {
+            showAlert(result.message || 'Đăng nhập thất bại', 'danger');
+        }
+    } catch (error) {
+        showAlert('Lỗi mạng. Vui lòng thử lại.', 'danger');
+    }
+});
+
+function showRegister() {
+    window.location.href = '/register';
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.getElementById('loginAlert');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        alertDiv.style.display = 'none';
+    }, 3000);
+}
+</script>
+{% endblock %}

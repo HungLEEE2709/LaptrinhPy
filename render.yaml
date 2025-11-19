@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: flappy-bird-web
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn web_game:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MONGODB_URI
+        value: mongodb://localhost:27017/
