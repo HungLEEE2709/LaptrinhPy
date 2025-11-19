@@ -1,38 +1,25 @@
-# -*- mode: python ; coding: utf-8 -*-
+# flappy.spec - cấu hình build web cho pygbag
 
+[project]
+main = "flappy_web.py"      # file game chạy web
+name = "flappybird"
+width = 500
+height = 600
+fps = 60
+src = "."
 
-a = Analysis(
-    ['flappy.py'],
-    pathex=[],
-    binaries=[],
-    datas=[],
-    hiddenimports=[],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    noarchive=False,
-    optimize=0,
-)
-pyz = PYZ(a.pure)
+[packages]
+copy = [
+    "assets",
+    "AI",
+    "player_scores.json",
+    "ai_best_model.json",
+    "ai_best_model.npz",
+    "ai_metadata.json"
+]
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name='flappy',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
+[python]
+version = "3.11"
+
+[server]
+port = 8000
